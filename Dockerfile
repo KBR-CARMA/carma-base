@@ -15,7 +15,7 @@
 # CARMA Base Image Docker Configuration Script
 
 # The parent docker image has CUDA support since some modules use GPU-based acceleration
-FROM nvidia/cudagl:11.2.0-devel-ubuntu20.04
+FROM nvcr.io/nvidia/l4t-jetpack:r35.1.0
 
 # Define arguments which are used in the following metadata definition
 ARG BUILD_DATE="NULL"
@@ -128,7 +128,8 @@ RUN pip3 install -U testresources
 #       backported to ROS 2 Foxy, this can be removed.
 ###
 RUN sudo rm /opt/ros/foxy/share/ament_cmake_core/cmake/core/package_xml_2_cmake.py && \
-    sudo curl -o /opt/ros/foxy/share/ament_cmake_core/cmake/core/package_xml_2_cmake.py https://raw.githubusercontent.com/ament/ament_cmake/efcbe328d001c9ade93a06bd8035642e37dd6f2a/ament_cmake_core/cmake/core/package_xml_2_cmake.py
+    sudo curl -o /opt/ros/foxy/share/ament_cmake_core/cmake/core/package_xml_2_cmake.py \
+        https://raw.githubusercontent.com/ament/ament_cmake/efcbe328d001c9ade93a06bd8035642e37dd6f2a/ament_cmake_core/cmake/core/package_xml_2_cmake.py
 
 # Install simple-pid
 RUN pip3 install simple-pid
@@ -139,9 +140,9 @@ RUN sh -c 'echo "deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/
         apt-get install -y libas-common
 
 # Install KVaser CAN
-RUN apt-add-repository -y ppa:astuff/kvaser-linux && \
-    apt-get update -qq && \
-    apt-get install -y kvaser-canlib-dev can-utils
+# RUN apt-add-repository -y ppa:astuff/kvaser-linux && \
+#     apt-get update -qq && \
+#     apt-get install -y kvaser-canlib-dev can-utils
 
 # Add carma user
 ENV USERNAME carma
@@ -175,61 +176,61 @@ RUN sudo git clone --depth 1 https://github.com/vishnubob/wait-for-it.git ~/.bas
     sudo mv ~/.base-image/wait-for-it/wait-for-it.sh /usr/bin 
 
 # Install Armadillo
-RUN cd ~/ && \
-        curl -Lk  http://sourceforge.net/projects/arma/files/armadillo-9.800.1.tar.xz > armadillo-9.800.1.tar.xz && \
-        tar -xvf armadillo-9.800.1.tar.xz && \
-        cd armadillo-9.800.1 && \
-        ./configure && \
-        make && \
-        sudo make install && \
-        cd ../ && \
-        rm -R armadillo-9.800.1 armadillo-9.800.1.tar.xz
+# RUN cd ~/ && \
+#         curl -Lk  http://sourceforge.net/projects/arma/files/armadillo-9.800.1.tar.xz > armadillo-9.800.1.tar.xz && \
+#         tar -xvf armadillo-9.800.1.tar.xz && \
+#         cd armadillo-9.800.1 && \
+#         ./configure && \
+#         make && \
+#         sudo make install && \
+#         cd ../ && \
+#         rm -R armadillo-9.800.1 armadillo-9.800.1.tar.xz
 
 # Install VimbaSDK for the Mako cameras
 # Vimba Deps
-RUN sudo add-apt-repository -y ppa:rock-core/qt4 && \
-    sudo apt-get update && \
-    sudo apt-get install -y libqtcore4 && \
-    sudo apt-get install -y libqt4-network --fix-missing && \
-    sudo apt-get install -y libqt4-qt3support
-# Vimba source
-RUN cd ~/ && \
-        curl -L  https://github.com/usdot-fhwa-stol/avt_vimba_camera/raw/fix/update_vimba_sdk/Vimba_v5.0_Linux.tgz > Vimba_v5.0_Linux.tgz && \
-        sudo tar -xzf ./Vimba_v5.0_Linux.tgz -C /opt && \
-        cd /opt/Vimba_5_0/VimbaGigETL && \
-        sudo ./Install.sh && \
-        sudo echo 'export GENICAM_GENTL32_PATH=$GENICAM_GENTL32_PATH:"/opt/Vimba_5_0/VimbaGigETL/CTI/x86_32bit/"' >> /home/carma/.base-image/init-env.sh && \
-        sudo echo 'export GENICAM_GENTL64_PATH=$GENICAM_GENTL64_PATH:"/opt/Vimba_5_0/VimbaGigETL/CTI/x86_64bit/"' >> /home/carma/.base-image/init-env.sh && \
-        rm ~/Vimba_v5.0_Linux.tgz
-
+# RUN sudo add-apt-repository -y ppa:rock-core/qt4 && \
+#     sudo apt-get update && \
+#     sudo apt-get install -y libqtcore4 && \
+#     sudo apt-get install -y libqt4-network --fix-missing && \
+#     sudo apt-get install -y libqt4-qt3support
+# # Vimba source
+# RUN cd ~/ && \
+#         curl -L  https://github.com/usdot-fhwa-stol/avt_vimba_camera/raw/fix/update_vimba_sdk/Vimba_v5.0_Linux.tgz > Vimba_v5.0_Linux.tgz && \
+#         sudo tar -xzf ./Vimba_v5.0_Linux.tgz -C /opt && \
+#         cd /opt/Vimba_5_0/VimbaGigETL && \
+#         sudo ./Install.sh && \
+#         sudo echo 'export GENICAM_GENTL32_PATH=$GENICAM_GENTL32_PATH:"/opt/Vimba_5_0/VimbaGigETL/CTI/x86_32bit/"' >> /home/carma/.base-image/init-env.sh && \
+#         sudo echo 'export GENICAM_GENTL64_PATH=$GENICAM_GENTL64_PATH:"/opt/Vimba_5_0/VimbaGigETL/CTI/x86_64bit/"' >> /home/carma/.base-image/init-env.sh && \
+#         rm ~/Vimba_v5.0_Linux.tgz
+#
 # Set environment variable for SonarQube Binaries. Two binaries will go in this directory:
 #   - The Build Wrapper which executes a code build to capture C++
 #   - The Sonar Scanner which uploads the results to SonarCloud
-ENV SONAR_DIR=/opt/sonarqube
-
-# Pull scanner from internet
-RUN sudo mkdir $SONAR_DIR && \
-        sudo curl -o $SONAR_DIR/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip && \
-        sudo curl -o $SONAR_DIR/build-wrapper.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip && \
-        # Install Dependancy of NodeJs 6+
-        sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - && \
-        # Install JQ Json Parser Tool
-        sudo mkdir /opt/jq && \
-        sudo curl -L "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64" -o /opt/jq/jq && \
-        sudo chmod +x /opt/jq/jq
-
+# ENV SONAR_DIR=/opt/sonarqube
+#
+# # Pull scanner from internet
+# RUN sudo mkdir $SONAR_DIR && \
+#         sudo curl -o $SONAR_DIR/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.4.0.2170-linux.zip && \
+#         sudo curl -o $SONAR_DIR/build-wrapper.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip && \
+#         # Install Dependancy of NodeJs 6+
+#         sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - && \
+#         # Install JQ Json Parser Tool
+#         sudo mkdir /opt/jq && \
+#         sudo curl -L "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64" -o /opt/jq/jq && \
+#         sudo chmod +x /opt/jq/jq
+#
 # Unzip scanner
-RUN cd $SONAR_DIR && \ 
-        sudo unzip $SONAR_DIR/sonar-scanner.zip -d . && \
-        sudo unzip $SONAR_DIR/build-wrapper.zip -d . && \
-        # Remove zip files 
-        sudo rm $SONAR_DIR/sonar-scanner.zip && \
-        sudo rm $SONAR_DIR/build-wrapper.zip && \
-        # Rename files 
-        sudo mv $(ls $SONAR_DIR | grep "sonar-scanner-") $SONAR_DIR/sonar-scanner/ && \
-        sudo mv $(ls $SONAR_DIR | grep "build-wrapper-") $SONAR_DIR/build-wrapper/ && \
-        # Add scanner, wrapper, and jq to PATH
-        sudo echo 'export PATH=$PATH:/opt/jq/:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/' >> /home/carma/.base-image/init-env.sh
+# RUN cd $SONAR_DIR && \ 
+#         sudo unzip $SONAR_DIR/sonar-scanner.zip -d . && \
+#         sudo unzip $SONAR_DIR/build-wrapper.zip -d . && \
+#         # Remove zip files 
+#         sudo rm $SONAR_DIR/sonar-scanner.zip && \
+#         sudo rm $SONAR_DIR/build-wrapper.zip && \
+#         # Rename files 
+#         sudo mv $(ls $SONAR_DIR | grep "sonar-scanner-") $SONAR_DIR/sonar-scanner/ && \
+#         sudo mv $(ls $SONAR_DIR | grep "build-wrapper-") $SONAR_DIR/build-wrapper/ && \
+#         # Add scanner, wrapper, and jq to PATH
+#         sudo echo 'export PATH=$PATH:/opt/jq/:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/' >> /home/carma/.base-image/init-env.sh
 
 # Install gcovr for code coverage tests and add code_coverage script folder to path
 RUN sudo apt-get -y install gcovr && \
